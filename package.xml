@@ -1,0 +1,37 @@
+<?xml version="1.0"?>
+<package>
+  <name>activity_exploration</name>
+  <version>1.0.0</version>
+  <description>The activity_exploration package</description>
+
+  <maintainer email="fxj345@cs.bham.ac.uk">Ferdian Jovan</maintainer>
+
+  <license>MIT</license>
+
+  <author email="fxj345@cs.bham.ac.uk">Ferdian Jovan</author>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>strands_exploration_msgs</build_depend>
+  <build_depend>human_trajectory</build_depend>
+  <build_depend>region_observation</build_depend>
+  <build_depend>roslib</build_depend>
+  <build_depend>actionlib</build_depend>
+  <build_depend>rospy</build_depend>
+  <build_depend>smach</build_depend>
+  <build_depend>smach_ros</build_depend>
+  <build_depend>topological_navigation</build_depend>
+  <build_depend>vision_people_logging</build_depend>
+  <run_depend>strands_exploration_msgs</run_depend>
+  <run_depend>human_trajectory</run_depend>
+  <run_depend>region_observation</run_depend>
+  <run_depend>roslib</run_depend>
+  <run_depend>actionlib</run_depend>
+  <run_depend>rospy</run_depend>
+  <run_depend>smach</run_depend>
+  <run_depend>smach_ros</run_depend>
+  <run_depend>topological_navigation</run_depend>
+  <run_depend>vision_people_logging</run_depend>
+
+  <export>
+  </export>
+</package>

@@ -1,0 +1,18 @@
+<launch>
+    <arg name="soma_config"/>
+    <arg name="patrol_probability" default="0.7"/>
+    <arg name="idle_duration" default="300"/>
+    <arg name="observe_duration" default="600"/>
+
+    <arg name="machine" default="localhost" />
+    <arg name="user" default="" />
+
+    <machine name="$(arg machine)" address="$(arg machine)" env-loader="$(optenv ROS_ENV_LOADER )" user="$(arg user)" default="true"/>
+
+    <node pkg="activity_exploration" type="exploration.py" name="activity_exploration" output="screen" respawn="true">
+        <param name="soma_config" value="$(arg soma_config)" type="string"/>
+        <param name="idle_duration" value="$(arg idle_duration)" type="int"/>
+        <param name="observe_duration" value="$(arg observe_duration)" type="int"/>
+        <param name="patrol_probability" value="$(arg patrol_probability)" type="double"/>
+    </node>
+</launch>
