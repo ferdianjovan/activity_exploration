@@ -3,10 +3,12 @@
 import yaml
 import rospy
 import smach
+import roslib
 import actionlib
 from human_trajectory.msg import Trajectories
 from vision_people_logging.srv import CaptureUBD
 from topological_navigation.msg import GotoNodeAction, GotoNodeGoal
+
 
 class Observe(smach.State):
 
@@ -72,7 +74,7 @@ class Observe(smach.State):
 
         is_person_there = False
         while (rospy.Time.now() - start) < self.observe_duration and not rospy.is_shutdown():
-            if not False in self.minute_check and not is_person_there:
+            if False not in self.minute_check and not is_person_there:
                 rospy.loginfo("Humans are constantly detected for %d minutes" % len(self.minute_check))
                 self._is_observing = False
                 is_person_there = True

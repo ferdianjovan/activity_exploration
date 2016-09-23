@@ -71,12 +71,12 @@ include_directories(
 
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
-install(PROGRAMS
-  scripts/counting_manager.py
-  src/region_observation/observe.py
-  src/periodic_poisson_processes/people_poisson.py
-  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-)
-install(DIRECTORY launch
-    DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
-)
+# install(PROGRAMS
+#   scripts/counting_manager.py
+#   src/region_observation/observe.py
+#   src/periodic_poisson_processes/people_poisson.py
+#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+# )
+# install(DIRECTORY launch
+#     DESTINATION ${CATKIN_PACKAGE_SHARE_DESTINATION}
+# )
