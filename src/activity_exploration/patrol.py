@@ -3,6 +3,7 @@
 import yaml
 import rospy
 import smach
+import roslib
 import random
 import actionlib
 from topological_navigation.msg import GotoNodeAction, GotoNodeGoal
