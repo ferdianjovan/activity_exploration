@@ -76,7 +76,7 @@ class Idle(smach.State):
         self._region_visits = dict()
         self._is_counting_visit = True
         rospy.sleep(self.idle_duration)
-        if random.random() > self.probability:
+        if random.random() <= self.probability:
             next_state = 'patrol'
             userdata.waypoint = self.type_wps[next_state][
                 random.randint(0, len(self.type_wps[next_state])-1)
@@ -106,13 +106,13 @@ class Idle(smach.State):
         wp_score = places.task_score[ind]
         # with some prob, compare the recommended place with current observed
         # people, which one higher is chosen.
-        if random.random() > self.probability:
+        if random.random() <= self.probability:
             rois = dict()
             for _, roi in self._region_visits.iteritems():
                 if roi not in rois:
                     rois[roi] = 0
                 rois[roi] += 1
-            temp = sorted(rois, key=lambda i:rois[i], reverse=True)
+            temp = sorted(rois, key=lambda i: rois[i], reverse=True)
             for roi in temp:
                 if roi in self.type_wps[next_state] and rois[roi] > wp_score:
                     waypoint = self.region_wps[roi]
