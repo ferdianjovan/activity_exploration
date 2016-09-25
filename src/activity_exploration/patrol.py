@@ -5,6 +5,7 @@ import rospy
 import smach
 import roslib
 import random
+import smach_ros
 import actionlib
 from topological_navigation.msg import GotoNodeAction, GotoNodeGoal
 
@@ -55,6 +56,7 @@ class Patrol(smach.State):
         nav_goal = GotoNodeGoal()
         nav_goal.target = waypoint
         self.nav_client.send_goal(nav_goal)
+        rospy.loginfo("Patrolling to %s..." % waypoint)
         self.nav_client.wait_for_result(
             timeout=rospy.Duration(int(self.patrol_duration.secs * 0.1))
         )

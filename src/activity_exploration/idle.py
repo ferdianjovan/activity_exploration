@@ -16,8 +16,7 @@ class Idle(smach.State):
         rospy.loginfo('Initiating idle state...')
         smach.State.__init__(
             self, outcomes=['patrol', 'observe', 'aborted'],
-            # input_keys=['degree_to_go'])
-            output_keys=["waypoint"]
+            input_keys=['waypoint'], output_keys=["waypoint"]
         )
         self.probability = rospy.get_param("~patrol_probability", 0.7)
         self.idle_duration = rospy.Duration(
@@ -45,13 +44,16 @@ class Idle(smach.State):
             )
         )
         rospy.loginfo("Type of actions to WayPoints: %s" % str(self.type_wps))
-        rospy.loginfo("Connecting to /arms/activity_rcmd_srv...")
-        self.recommender_srv = rospy.ServiceProxy(
-            "/arms/activity_rcmd_srv", GetExplorationTasks
-        )
-        rospy.loginfo("Subscribing to /people_trajectory/trajectories/complete...")
+        
+        if self.probability < 1.0:
+            rospy.loginfo("Connecting to /arms/activity_rcmd_srv...")
+            self.recommender_srv = rospy.ServiceProxy(
+                "/arms/activity_rcmd_srv", GetExplorationTasks
+            )
+            self.recommender_srv.wait_for_service()
+        rospy.loginfo("Subscribing to /people_trajectory/trajectories/batch...")
         rospy.Subscriber(
-            "/people_trajectory/trajectories/complete", Trajectories, self._pt_cb, None, 10
+            "/people_trajectory/trajectories/batch", Trajectories, self._pt_cb, None, 10
         )
 
     def _pt_cb(self, msg):
@@ -66,6 +68,7 @@ class Idle(smach.State):
                 for roi, area in self.regions.iteritems():
                     if is_intersected(area, points):
                         if trajectory.uuid not in self._region_visits:
+                            rospy.loginfo("%s seems to visit %s" % (trajectory.uuid, roi))
                             self._region_visits[trajectory.uuid] = roi
                         break
 
@@ -99,7 +102,7 @@ class Idle(smach.State):
     def get_recommended_places(self, next_state='observe'):
         # get recommendation from activity recommender system
         start = rospy.Time.now()
-        end = start + rospy.Duration(self.observe_duration)
+        end = start + self.observe_duration
         places = self.recommender_srv(start, end)
         ind = random.randint(0, 2)
         waypoint = places.task_definition[ind]

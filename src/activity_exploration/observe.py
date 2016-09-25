@@ -15,10 +15,11 @@ class Observe(smach.State):
     def __init__(self):
         rospy.loginfo('Initiating observe state...')
         smach.State.__init__(
-            self, outcomes=['succeeded', 'aborted'],
+            self, outcomes=['succeeded'],
             input_keys=['waypoint']
         )
 
+        self._is_observing = False
         self._reset_minute_check()  # for checking whether person is there for n consecutive minutes
         rospy.loginfo("Connecting to topological_navigation action server...")
         self.nav_client = actionlib.SimpleActionClient(
@@ -50,6 +51,7 @@ class Observe(smach.State):
             for trajectory in msg.trajectories:
                 start = trajectory.start_time
                 if (start - self._start_time).secs / 60 == self._counter:
+                    rospy.loginfo("A person is detected at %d" % start.secs)
                     self.minute_check[self.counter % len(self.minute_check)] = True
                     self._counter += 1
                     break
@@ -58,7 +60,7 @@ class Observe(smach.State):
         self._counter = 0
         self._start_time = rospy.Time.now()
         self.minute_check = [
-            False for i in rospy.get_param("~observe_duration", 1200)/(60*2)
+            False for i in range(0, rospy.get_param("~observe_duration", 1200)/(60*2))
         ]
 
     def execute(self, userdata):
@@ -78,9 +80,10 @@ class Observe(smach.State):
                 rospy.loginfo("Humans are constantly detected for %d minutes" % len(self.minute_check))
                 self._is_observing = False
                 is_person_there = True
+            	self.ubd_srv()
             rospy.sleep(1)
 
-        if False in self.minute_check:
-            self.ubd_srv()
+        # if False in self.minute_check:
+        # Need to capture a pic
         self._is_observing = False
         return 'succeeded'
