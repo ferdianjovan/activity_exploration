@@ -50,14 +50,15 @@ class Observe(smach.State):
         if self._is_observing:
             for trajectory in msg.trajectories:
                 start = trajectory.start_time
-                if (start - self._start_time).secs / 60 == self._counter:
+                ind = ((start - self._start_time).secs / 60) % len(self.minute_check)
+                if ind not in self._indices:
                     rospy.loginfo("A person is detected at %d" % start.secs)
-                    self.minute_check[self.counter % len(self.minute_check)] = True
-                    self._counter += 1
+                    self.minute_check[ind] = True
+                    self._indices.append(ind)
                     break
 
     def _reset_minute_check(self):
-        self._counter = 0
+        self._indices = list() 
         self._start_time = rospy.Time.now()
         self.minute_check = [
             False for i in range(0, rospy.get_param("~observe_duration", 1200)/(60*2))
