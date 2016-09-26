@@ -104,6 +104,10 @@ class Idle(smach.State):
         start = rospy.Time.now()
         end = start + self.observe_duration
         places = self.recommender_srv(start, end)
+        if len(places.task_definition) == 0:
+            return self.type_wps[next_state][
+                random.randint(0, len(self.type_wps[next_state])-1)
+            ]
         ind = random.randint(0, 2)
         waypoint = places.task_definition[ind]
         wp_score = places.task_score[ind]

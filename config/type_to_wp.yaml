@@ -1,5 +1,5 @@
 # Type: WayPoint
 "patrol": ["WayPoint11", "WayPoint12", "WayPoint15", "WayPoint14", "WayPoint16", "WayPoint1", "WayPoint3", "WayPoint18", "Station"]
-# "patrol": ["WayPoint18", "Station"]
 "observe": ["WayPoint2", "WayPoint4", "WayPoint10", "WayPoint17", "WayPoint13", "Station"]
+# "observe": ["WayPoint18", "Station"]
 
