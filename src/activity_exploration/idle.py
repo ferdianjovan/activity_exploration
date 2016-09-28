@@ -108,7 +108,9 @@ class Idle(smach.State):
             return self.type_wps[next_state][
                 random.randint(0, len(self.type_wps[next_state])-1)
             ]
-        ind = random.randint(0, 2)
+        ind = random.randint(
+            0, max([2, len(places.task_definition)-1])
+        )
         waypoint = places.task_definition[ind]
         wp_score = places.task_score[ind]
         # with some prob, compare the recommended place with current observed
