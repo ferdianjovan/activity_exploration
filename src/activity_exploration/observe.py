@@ -58,7 +58,7 @@ class Observe(smach.State):
                     break
 
     def _reset_minute_check(self):
-        self._indices = list() 
+        self._indices = list()
         self._start_time = rospy.Time.now()
         self.minute_check = [
             False for i in range(0, rospy.get_param("~observe_duration", 1200)/(60*2))
@@ -81,7 +81,7 @@ class Observe(smach.State):
                 rospy.loginfo("Humans are constantly detected for %d minutes" % len(self.minute_check))
                 self._is_observing = False
                 is_person_there = True
-            	self.ubd_srv()
+                self.ubd_srv()
             rospy.sleep(1)
 
         # if False in self.minute_check:
