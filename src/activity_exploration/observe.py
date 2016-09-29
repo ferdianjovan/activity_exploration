@@ -8,6 +8,7 @@ import actionlib
 from human_trajectory.msg import Trajectories
 from vision_people_logging.srv import CaptureUBD
 from topological_navigation.msg import GotoNodeAction, GotoNodeGoal
+from record_skeleton_action.msg import skeletonAction, skeletonActionGoal
 
 
 class Observe(smach.State):
@@ -40,10 +41,10 @@ class Observe(smach.State):
         )
         # rospy.loginfo("Connecting to topological_navigation action server...")
         # add action client to paul stuff
-        # self.action_client = actionlib.SimpleActionClient(
-        #     '', SomeAction
-        # )
-        # self.action_client.wait_for_server()
+        self.action_client = actionlib.SimpleActionClient(
+            '/record_action', skeletonAction
+        )
+        self.action_client.wait_for_server()
         self.ubd_srv = rospy.ServiceProxy("/vision_logging_service/capture", CaptureUBD)
 
     def _pt_cb(self, msg):
@@ -75,6 +76,9 @@ class Observe(smach.State):
         rospy.sleep(0.1)
         self._is_observing = True
 
+        self.action_client.send_goal(
+            skeletonActionGoal(self.observe_duration, userdata.waypoint)
+        )
         is_person_there = False
         while (rospy.Time.now() - start) < self.observe_duration and not rospy.is_shutdown():
             if False not in self.minute_check and not is_person_there:
@@ -83,7 +87,7 @@ class Observe(smach.State):
                 is_person_there = True
                 self.ubd_srv()
             rospy.sleep(1)
-
+        self.action_client.wait_for_result()
         # if False in self.minute_check:
         # Need to capture a pic
         self._is_observing = False
