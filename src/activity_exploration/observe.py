@@ -8,7 +8,7 @@ import actionlib
 from human_trajectory.msg import Trajectories
 from vision_people_logging.srv import CaptureUBD
 from topological_navigation.msg import GotoNodeAction, GotoNodeGoal
-from record_skeleton_action.msg import skeletonAction, skeletonActionGoal
+from record_skeletons_action.msg import skeletonAction, skeletonGoal
 
 
 class Observe(smach.State):
@@ -22,11 +22,11 @@ class Observe(smach.State):
 
         self._is_observing = False
         self._reset_minute_check()  # for checking whether person is there for n consecutive minutes
-        rospy.loginfo("Connecting to topological_navigation action server...")
         self.nav_client = actionlib.SimpleActionClient(
             'topological_navigation', GotoNodeAction
         )
         self.nav_client.wait_for_server()
+        rospy.loginfo("Connected to topological_navigation action server...")
         self.observe_wps = yaml.load(
             open(
                 roslib.packages.get_pkg_dir('activity_exploration') + '/config/type_to_wp.yaml',
@@ -39,13 +39,15 @@ class Observe(smach.State):
         rospy.Subscriber(
             "/people_trajectory/trajectories/batch", Trajectories, self._pt_cb, None, 10
         )
-        # rospy.loginfo("Connecting to topological_navigation action server...")
         # add action client to paul stuff
         self.action_client = actionlib.SimpleActionClient(
-            '/record_action', skeletonAction
+            '/record_skeletons', skeletonAction
         )
         self.action_client.wait_for_server()
+        rospy.loginfo("Connected to /record_skeletons action server...")
         self.ubd_srv = rospy.ServiceProxy("/vision_logging_service/capture", CaptureUBD)
+        self.ubd_srv.wait_for_service()
+        rospy.loginfo("Connected to /vision_logging_service/capture service...")
 
     def _pt_cb(self, msg):
         if self._is_observing:
@@ -77,7 +79,7 @@ class Observe(smach.State):
         self._is_observing = True
 
         self.action_client.send_goal(
-            skeletonActionGoal(self.observe_duration, userdata.waypoint)
+            skeletonGoal(self.observe_duration, userdata.waypoint)
         )
         is_person_there = False
         while (rospy.Time.now() - start) < self.observe_duration and not rospy.is_shutdown():

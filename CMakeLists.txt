@@ -12,7 +12,7 @@ find_package(catkin REQUIRED COMPONENTS
   vision_people_logging
   topological_navigation
   strands_exploration_msgs
-  record_skeleton_action
+  record_skeletons_action
 )
 
 catkin_python_setup()
@@ -54,7 +54,7 @@ catkin_python_setup()
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES activity_exploration
-  CATKIN_DEPENDS human_trajectory region_observation roslib rospy topological_navigation smach smach_ros strands_exploration_msgs actionlib vision_people_logging record_skeleton_action
+  CATKIN_DEPENDS human_trajectory region_observation roslib rospy topological_navigation smach smach_ros strands_exploration_msgs actionlib vision_people_logging record_skeletons_action
 #  DEPENDS system_lib
 )
 
