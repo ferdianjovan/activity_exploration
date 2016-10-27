@@ -15,7 +15,8 @@ class ExplorationSM(smach.StateMachine):
             self,
             outcomes=['succeeded', 'aborted']
         )
-        self.userdata.waypoint = None
+        self.userdata.roi = ""
+        self.userdata.waypoint = ""
         self._idle = Idle()
         self._patrol = Patrol()
         self._observe = Observe()

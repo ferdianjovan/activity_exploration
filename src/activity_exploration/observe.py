@@ -16,10 +16,11 @@ class Observe(smach.State):
     def __init__(self):
         rospy.loginfo('Initiating observe state...')
         smach.State.__init__(
-            self, outcomes=['succeeded'],
-            input_keys=['waypoint']
+            self, outcomes=['succeeded'], input_keys=['waypoint', 'roi'],
+            output_keys=["waypoint", 'roi']
         )
 
+        self.soma_config = rospy.get_param("~soma_config", "activity_exploration")
         self._is_observing = False
         self._reset_minute_check()  # for checking whether person is there for n consecutive minutes
         self.nav_client = actionlib.SimpleActionClient(
@@ -79,7 +80,7 @@ class Observe(smach.State):
         self._is_observing = True
 
         self.action_client.send_goal(
-            skeletonGoal(self.observe_duration, userdata.waypoint)
+            skeletonGoal(self.observe_duration, userdata.roi, self.soma_config)
         )
         is_person_there = False
         while (rospy.Time.now() - start) < self.observe_duration and not rospy.is_shutdown():
@@ -92,5 +93,7 @@ class Observe(smach.State):
         self.action_client.wait_for_result()
         # if False in self.minute_check:
         # Need to capture a pic
+        userdata.waypoint = ''
+        userdata.roi = ''
         self._is_observing = False
         return 'succeeded'

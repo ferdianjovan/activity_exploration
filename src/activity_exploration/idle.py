@@ -6,7 +6,7 @@ import smach
 import roslib
 import random
 from human_trajectory.msg import Trajectories
-from strands_exploration_msgs.srv import GetExplorationTasks
+from activity_recommender_system.srv import GetExplorationTasks
 from region_observation.util import create_line_string, is_intersected, get_soma_info
 
 
@@ -16,7 +16,7 @@ class Idle(smach.State):
         rospy.loginfo('Initiating idle state...')
         smach.State.__init__(
             self, outcomes=['patrol', 'observe', 'aborted'],
-            input_keys=['waypoint'], output_keys=["waypoint"]
+            input_keys=['waypoint', 'roi'], output_keys=["waypoint", 'roi']
         )
         self.probability = rospy.get_param("~patrol_probability", 0.7)
         self.idle_duration = rospy.Duration(
@@ -44,7 +44,6 @@ class Idle(smach.State):
             )
         )
         rospy.loginfo("Type of actions to WayPoints: %s" % str(self.type_wps))
-        
         if self.probability < 1.0:
             rospy.loginfo("Connecting to /arms/activity_rcmd_srv...")
             self.recommender_srv = rospy.ServiceProxy(
@@ -84,8 +83,9 @@ class Idle(smach.State):
             userdata.waypoint = self.type_wps[next_state][
                 random.randint(0, len(self.type_wps[next_state])-1)
             ]
+            userdata.roi = ""
         else:
-            userdata.waypoint = self.get_recommended_places()
+            userdata.waypoint, userdata.roi = self.get_recommended_places()
 
         if userdata.waypoint == "":
             rospy.logwarn("No waypoint is set!!!")
@@ -103,16 +103,23 @@ class Idle(smach.State):
         # get recommendation from activity recommender system
         start = rospy.Time.now()
         end = start + self.observe_duration
-        places = self.recommender_srv(start, end)
-        if len(places.task_definition) == 0:
-            return self.type_wps[next_state][
-                random.randint(0, len(self.type_wps[next_state])-1)
-            ]
+        recommendations = self.recommender_srv(start, end)
+        if len(recommendations.waypoints) == 0:
+            idx = random.randint(0, len(self.type_wps[next_state])-1)
+            waypoint = self.type_wps[next_state][idx]
+            region = ""
+            for roi, wp in self.region_wps.iteritems():
+                if wp == waypoint:
+                    region = roi
+                    break
+            assert region == "", "Region id is an empty string!"
+            return waypoint, region
         ind = random.randint(
-            0, min([2, len(places.task_definition)-1])
+            0, min([2, len(recommendations.waypoints)-1])
         )
-        waypoint = places.task_definition[ind]
-        wp_score = places.task_score[ind]
+        waypoint = recommendations.waypoints[ind]
+        region = recommendations.regions[ind]
+        wp_score = recommendations.scores[ind]
         # with some prob, compare the recommended place with current observed
         # people, which one higher is chosen.
         if random.random() <= self.probability:
@@ -125,4 +132,5 @@ class Idle(smach.State):
             for roi in temp:
                 if roi in self.type_wps[next_state] and rois[roi] > wp_score:
                     waypoint = self.region_wps[roi]
-        return waypoint
+                    region = roi
+        return waypoint, region
