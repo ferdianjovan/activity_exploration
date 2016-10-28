@@ -89,6 +89,10 @@ class Observe(smach.State):
                 self._is_observing = False
                 is_person_there = True
                 self.ubd_srv()
+            if self.action_client.get_state() in [
+                actionlib.GoalStatus.SUCCEEDED, actionlib.GoalStatus.PREEMPTED, actionlib.GoalStatus.ABORTED
+            ]:
+                break
             rospy.sleep(1)
         self.action_client.wait_for_result()
         # if False in self.minute_check:
