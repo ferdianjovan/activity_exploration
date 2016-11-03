@@ -8,8 +8,11 @@ import actionlib
 from human_trajectory.msg import Trajectories
 from vision_people_logging.srv import CaptureUBD
 from topological_navigation.msg import GotoNodeAction, GotoNodeGoal
-from record_skeletons_action.msg import skeletonAction, skeletonGoal
+# from record_skeletons_action.msg import skeletonAction, skeletonGoal
 
+from strands_executive_msgs.msg import Task
+from strands_executive_msgs.srv import AddTasks
+from strands_executive_msgs import task_utils as tu
 
 class Observe(smach.State):
 
@@ -41,11 +44,15 @@ class Observe(smach.State):
             "/people_trajectory/trajectories/batch", Trajectories, self._pt_cb, None, 10
         )
         # add action client to paul stuff
-        self.action_client = actionlib.SimpleActionClient(
-            '/record_skeletons', skeletonAction
-        )
-        self.action_client.wait_for_server()
-        rospy.loginfo("Connected to /record_skeletons action server...")
+        # self.action_client = actionlib.SimpleActionClient(
+        #     '/record_skeletons', skeletonAction
+        # )
+        # self.action_client.wait_for_server()
+        # rospy.loginfo("Connected to /record_skeletons action server...")
+        # add service addTasks
+        self.add_tasks_srv = rospy.ServiceProxy('/robot_routine/add_tasks', AddTasks)
+        self.add_tasks_srv.wait_for_service()
+        rospy.loginfo("Connected to /robot_routine/add_tasks service...")
         self.ubd_srv = rospy.ServiceProxy("/vision_logging_service/capture", CaptureUBD)
         self.ubd_srv.wait_for_service()
         rospy.loginfo("Connected to /vision_logging_service/capture service...")
@@ -75,26 +82,41 @@ class Observe(smach.State):
         nav_goal.target = userdata.waypoint
         self.nav_client.send_goal(nav_goal)
         self.nav_client.wait_for_result()
-        self._reset_minute_check()
+        self._reset_minute_check(self.observe_duration)
         rospy.sleep(0.1)
         self._is_observing = True
-
-        self.action_client.send_goal(
-            skeletonGoal(self.observe_duration, userdata.roi, self.soma_config)
-        )
-        is_person_there = False
-        while (rospy.Time.now() - start) < self.observe_duration and not rospy.is_shutdown():
-            if False not in self.minute_check and not is_person_there:
-                rospy.loginfo("Humans are constantly detected for %d minutes" % len(self.minute_check))
-                self._is_observing = False
-                is_person_there = True
-                self.ubd_srv()
-            if self.action_client.get_state() in [
-                actionlib.GoalStatus.SUCCEEDED, actionlib.GoalStatus.PREEMPTED, actionlib.GoalStatus.ABORTED
-            ]:
-                break
+        end = rospy.Time.now()
+        duration_left = self.observe_duration - (end - start)
+        if duration_left < rospy.Duration(0):
+            task = Task(
+                action="skeleton_action",
+                start_node_id=userdata.waypoint,
+                end_node_id=userdata.waypoint,
+                start_after=start,
+                end_before=start+self.observe_duration,
+                max_duration=duration_left
+            )
+            tu.add_duration_argument(task, duration_left)
+            tu.add_string_argument(task, userdata.roi)
+            tu.add_string_argument(task, self.soma_config)
             rospy.sleep(1)
-        self.action_client.wait_for_result()
+            self.add_tasks_srv([task])
+            # self.action_client.send_goal(
+            #     skeletonGoal(duration_left, userdata.roi, self.soma_config)
+            # )
+            is_person_there = False
+            while (rospy.Time.now() - start) < duration_left and not rospy.is_shutdown():
+                if False not in self.minute_check and not is_person_there:
+                    rospy.loginfo("Humans are constantly detected for %d minutes" % len(self.minute_check))
+                    self._is_observing = False
+                    is_person_there = True
+                    self.ubd_srv()
+                # if self.action_client.get_state() in [
+                #     actionlib.GoalStatus.SUCCEEDED, actionlib.GoalStatus.PREEMPTED, actionlib.GoalStatus.ABORTED
+                # ]:
+                #     break
+                rospy.sleep(1)
+            # self.action_client.wait_for_result()
         # if False in self.minute_check:
         # Need to capture a pic
         userdata.waypoint = ''
