@@ -55,7 +55,7 @@ catkin_python_setup()
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES activity_exploration
-  CATKIN_DEPENDS human_trajectory region_observation roslib rospy topological_navigation smach smach_ros strands_exploration_msgs actionlib vision_people_logging record_skeletons_action activity_recommender_system strands_executive_msgs
+  CATKIN_DEPENDS human_trajectory region_observation roslib rospy topological_navigation smach smach_ros actionlib vision_people_logging record_skeletons_action activity_recommender_system strands_executive_msgs
 #  DEPENDS system_lib
 )
 

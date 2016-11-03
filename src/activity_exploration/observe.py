@@ -25,7 +25,6 @@ class Observe(smach.State):
 
         self.soma_config = rospy.get_param("~soma_config", "activity_exploration")
         self._is_observing = False
-        self._reset_minute_check()  # for checking whether person is there for n consecutive minutes
         self.nav_client = actionlib.SimpleActionClient(
             'topological_navigation', GotoNodeAction
         )
@@ -40,6 +39,7 @@ class Observe(smach.State):
         self.observe_duration = rospy.Duration(
             rospy.get_param("~observe_duration", 1200)
         )
+        self._reset_minute_check(self.observe_duration)
         rospy.Subscriber(
             "/people_trajectory/trajectories/batch", Trajectories, self._pt_cb, None, 10
         )
@@ -50,9 +50,9 @@ class Observe(smach.State):
         # self.action_client.wait_for_server()
         # rospy.loginfo("Connected to /record_skeletons action server...")
         # add service addTasks
-        self.add_tasks_srv = rospy.ServiceProxy('/robot_routine/add_tasks', AddTasks)
+        self.add_tasks_srv = rospy.ServiceProxy('/task_executor/demand_tasks', AddTasks)
         self.add_tasks_srv.wait_for_service()
-        rospy.loginfo("Connected to /robot_routine/add_tasks service...")
+        rospy.loginfo("Connected to /task_executor/demand_tasks service...")
         self.ubd_srv = rospy.ServiceProxy("/vision_logging_service/capture", CaptureUBD)
         self.ubd_srv.wait_for_service()
         rospy.loginfo("Connected to /vision_logging_service/capture service...")
@@ -68,11 +68,11 @@ class Observe(smach.State):
                     self._indices.append(ind)
                     break
 
-    def _reset_minute_check(self):
+    def _reset_minute_check(self, duration):
         self._indices = list()
         self._start_time = rospy.Time.now()
         self.minute_check = [
-            False for i in range(0, rospy.get_param("~observe_duration", 1200)/(60*2))
+            False for i in range(0, duration.secs/(60*2))
         ]
 
     def execute(self, userdata):
@@ -87,7 +87,7 @@ class Observe(smach.State):
         self._is_observing = True
         end = rospy.Time.now()
         duration_left = self.observe_duration - (end - start)
-        if duration_left < rospy.Duration(0):
+        if duration_left > rospy.Duration(1, 0):
             task = Task(
                 action="skeleton_action",
                 start_node_id=userdata.waypoint,
@@ -100,6 +100,7 @@ class Observe(smach.State):
             tu.add_string_argument(task, userdata.roi)
             tu.add_string_argument(task, self.soma_config)
             rospy.sleep(1)
+            rospy.loginfo("Adding a task to task scheduler from %d to %d" % (start.secs, (start+self.observe_duration).secs))
             self.add_tasks_srv([task])
             # self.action_client.send_goal(
             #     skeletonGoal(duration_left, userdata.roi, self.soma_config)
