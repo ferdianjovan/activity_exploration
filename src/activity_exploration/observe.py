@@ -59,14 +59,17 @@ class Observe(smach.State):
 
     def _pt_cb(self, msg):
         if self._is_observing:
-            for trajectory in msg.trajectories:
-                start = trajectory.start_time
-                ind = ((start - self._start_time).secs / 60) % len(self.minute_check)
-                if ind not in self._indices:
-                    rospy.loginfo("A person is detected at %d" % start.secs)
-                    self.minute_check[ind] = True
-                    self._indices.append(ind)
-                    break
+            try:
+                for trajectory in msg.trajectories:
+                    start = trajectory.start_time
+                    ind = ((start - self._start_time).secs / 60) % len(self.minute_check)
+                    if ind not in self._indices:
+                        rospy.loginfo("A person is detected at %d" % start.secs)
+                        self.minute_check[ind] = True
+                        self._indices.append(ind)
+                        break
+            except:
+                rospy.logerr("self.minute_check has length 0!")
 
     def _reset_minute_check(self, duration):
         self._indices = list()
@@ -89,11 +92,11 @@ class Observe(smach.State):
         duration_left = self.observe_duration - (end - start)
         if duration_left > rospy.Duration(1, 0):
             task = Task(
-                action="skeleton_action",
+                action="record_skeletons",
                 start_node_id=userdata.waypoint,
                 end_node_id=userdata.waypoint,
-                start_after=start,
-                end_before=start+self.observe_duration,
+                # start_after=rospy.Time.now(),
+                # end_before=rospy.Time.now()+self.observe_duration,
                 max_duration=duration_left
             )
             tu.add_duration_argument(task, duration_left)
@@ -101,7 +104,7 @@ class Observe(smach.State):
             tu.add_string_argument(task, self.soma_config)
             rospy.sleep(1)
             rospy.loginfo("Adding a task to task scheduler from %d to %d" % (start.secs, (start+self.observe_duration).secs))
-            self.add_tasks_srv([task])
+            self.add_tasks_srv(task)
             # self.action_client.send_goal(
             #     skeletonGoal(duration_left, userdata.roi, self.soma_config)
             # )
