@@ -11,7 +11,7 @@ from topological_navigation.msg import GotoNodeAction, GotoNodeGoal
 # from record_skeletons_action.msg import skeletonAction, skeletonGoal
 
 from strands_executive_msgs.msg import Task
-from strands_executive_msgs.srv import AddTasks
+from strands_executive_msgs.srv import DemandTask
 from strands_executive_msgs import task_utils as tu
 
 class Observe(smach.State):
@@ -50,7 +50,7 @@ class Observe(smach.State):
         # self.action_client.wait_for_server()
         # rospy.loginfo("Connected to /record_skeletons action server...")
         # add service addTasks
-        self.add_tasks_srv = rospy.ServiceProxy('/task_executor/demand_task', AddTasks)
+        self.add_tasks_srv = rospy.ServiceProxy('/task_executor/demand_task', DemandTask)
         self.add_tasks_srv.wait_for_service()
         rospy.loginfo("Connected to /task_executor/demand_task service...")
         self.ubd_srv = rospy.ServiceProxy("/vision_logging_service/capture", CaptureUBD)
